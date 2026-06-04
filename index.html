@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Révision — Bases de Données Distribuées</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --bg3: #1a2236;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0f4ff;
+  --text2: #8b9cbf;
+  --text3: #5a6a8a;
+  --accent: #4f8ef7;
+  --accent2: #38d9a9;
+  --danger: #ff6b6b;
+  --success: #51cf66;
+  --radius: 12px;
+  --radius2: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+
+.hero {
+  background: linear-gradient(135deg, #0a0e1a 0%, #0d1b3e 50%, #0a1628 100%);
+  padding: 3rem 1.5rem 2rem; text-align: center; position: relative; overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.hero::before {
+  content: ''; position: absolute; width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(79,142,247,0.12) 0%, transparent 70%);
+  top: -200px; left: 50%; transform: translateX(-50%); pointer-events: none;
+}
+.hero-badge {
+  display: inline-block; background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.3);
+  color: #7eb3ff; font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 1rem;
+}
+.hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; color: #fff; line-height: 1.15; margin-bottom: 0.5rem; }
+.hero h1 span { background: linear-gradient(135deg, #4f8ef7, #38d9a9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { color: var(--text2); font-size: 0.95rem; margin-bottom: 1.5rem; }
+.tech-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.tech-pill { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 1px solid; font-weight: 500; cursor: pointer; transition: all 0.2s; background: transparent; font-family: 'DM Sans', sans-serif; }
+.tech-pill:hover { transform: translateY(-2px); }
+
+.wrapper { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+.mode-tabs { display: flex; gap: 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; margin-bottom: 1.5rem; }
+.mode-tab { flex: 1; padding: 10px 8px; border: none; background: transparent; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; border-radius: var(--radius2); transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.mode-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(79,142,247,0.35); }
+
+.tech-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+.tech-btn { padding: 7px 16px; border: 1px solid var(--border); border-radius: 20px; background: var(--bg2); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.tech-btn:hover { border-color: var(--border2); color: var(--text); }
+.tech-btn.active { color: #0a0e1a; border-color: transparent; }
+
+.card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; transition: border-color 0.2s; }
+.card:hover { border-color: var(--border2); }
+.card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1rem; }
+.tech-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+.card-header h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+.type-tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 6px; margin-top: 4px; }
+
+.section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 8px; margin-top: 14px; }
+.section-title:first-child { margin-top: 0; }
+p, li { font-size: 14px; color: var(--text2); line-height: 1.65; }
+ul { padding-left: 18px; }
+li { margin-bottom: 4px; }
+li::marker { color: var(--text3); }
+code { font-family: 'DM Mono', monospace; font-size: 12px; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 4px; color: #a8d0ff; }
+pre { font-family: 'DM Mono', monospace; font-size: 12px; background: #070c18; border: 1px solid var(--border); border-radius: var(--radius2); padding: 12px 14px; overflow-x: auto; line-height: 1.7; color: #c8deff; margin: 6px 0 10px; white-space: pre; }
+.syntax-label { font-size: 12px; font-weight: 500; color: var(--text3); margin-top: 12px; margin-bottom: 2px; font-family: 'DM Mono', monospace; }
+
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pros-cons-box { background: var(--bg3); border-radius: var(--radius2); padding: 12px; }
+.pros-cons-box h4 { font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+.pros-cons-box.pros h4 { color: var(--success); }
+.pros-cons-box.cons h4 { color: var(--danger); }
+
+/* DEEP DIVE */
+.deep-toggle {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 11px 16px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: var(--radius2); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--text2); transition: all 0.2s; margin-top: 4px;
+  justify-content: space-between;
+}
+.deep-toggle:hover { border-color: var(--border2); color: var(--text); }
+.deep-toggle .arrow { transition: transform 0.3s; font-size: 16px; }
+.deep-toggle.open { color: var(--text); }
+.deep-toggle.open .arrow { transform: rotate(180deg); }
+.deep-content {
+  display: none; margin-top: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius2); padding: 1.2rem;
+  animation: fadeIn 0.25s ease;
+}
+.deep-content.visible { display: block; }
+.deep-section { margin-bottom: 1.2rem; }
+.deep-section:last-child { margin-bottom: 0; }
+.deep-section h4 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.deep-section p { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 6px; }
+.analogy-box { background: rgba(79,142,247,0.08); border-left: 3px solid var(--accent); border-radius: 0 var(--radius2) var(--radius2) 0; padding: 10px 14px; margin: 8px 0; font-size: 13px; color: var(--text2); }
+.analogy-box strong { color: #7eb3ff; }
+.concept-pill { display: inline-block; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text2); margin: 2px; }
+.warning-box { background: rgba(249,168,37,0.08); border-left: 3px solid #f9a825; border-radius: 0 var(--radius2) var(--radius2) 0; padding: 10px 14px; margin: 8px 0; font-size: 13px; color: var(--text2); }
+.warning-box strong { color: #f9a825; }
+
+/* QCM */
+.qcm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; }
+.score-display { display: flex; align-items: baseline; gap: 6px; }
+.score-big { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; }
+.score-sub { font-size: 13px; color: var(--text2); }
+.progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.4s; }
+
+.qcm-page-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 1.2rem; }
+.page-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--radius2); background: var(--bg2); color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.page-btn:hover { border-color: var(--border2); color: var(--text); }
+.page-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.08); }
+.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.page-label { font-size: 12px; color: var(--text3); margin-left: auto; }
+
+.qcm-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+.qcm-q-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.qcm-q { font-size: 14px; font-weight: 500; color: #fff; margin-bottom: 12px; line-height: 1.5; }
+.qcm-opt { display: block; width: 100%; padding: 10px 14px; margin: 6px 0; border: 1px solid var(--border); border-radius: var(--radius2); background: var(--bg3); color: var(--text2); font-size: 13px; cursor: pointer; text-align: left; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+.qcm-opt:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+.qcm-opt.correct { background: rgba(81,207,102,0.12); border-color: var(--success); color: #a3e6ae; }
+.qcm-opt.wrong { background: rgba(255,107,107,0.12); border-color: var(--danger); color: #ffaaaa; }
+.qcm-opt.reveal { background: rgba(81,207,102,0.06); border-color: rgba(81,207,102,0.3); color: rgba(163,230,174,0.6); }
+.qcm-expl { margin-top: 10px; padding: 10px 14px; background: rgba(79,142,247,0.08); border-left: 3px solid var(--accent); border-radius: 0 var(--radius2) var(--radius2) 0; font-size: 13px; color: var(--text2); display: none; }
+.reset-btn { padding: 8px 18px; background: transparent; border: 1px solid var(--border2); color: var(--text2); font-size: 13px; font-weight: 500; border-radius: var(--radius2); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+.reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* COMPARE */
+.compare-table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+thead th { padding: 10px 14px; background: var(--bg3); color: var(--text3); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; text-align: left; border-bottom: 1px solid var(--border); }
+tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+tbody tr:hover td { background: var(--bg3); }
+tbody td:first-child { color: #fff; font-weight: 500; }
+.memo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 8px; }
+.memo-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius2); padding: 12px 14px; }
+.memo-card h4 { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+.memo-card p { font-size: 12px; color: var(--text2); }
+
+.hidden { display: none !important; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.card, .qcm-card { animation: fadeIn 0.3s ease; }
+
+footer { text-align: center; padding: 2rem 1rem 1.5rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+.footer-inner { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+.footer-text { font-size: 12px; color: var(--text3); }
+.signature {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  background: linear-gradient(135deg, #4f8ef7, #38d9a9);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: 0.04em;
+}
+.signature::before { content: '◈'; font-size: 10px; background: linear-gradient(135deg, #4f8ef7, #38d9a9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+@media (max-width: 600px) {
+  .hero { padding: 2rem 1rem 1.5rem; }
+  .pros-cons { grid-template-columns: 1fr; }
+  .mode-tab { font-size: 11px; padding: 8px 4px; }
+  .tech-btn { font-size: 11px; padding: 5px 12px; }
+  pre { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">Programmation Distribuée</div>
+  <h1>Révision <span>Bases de Données</span><br>NoSQL &amp; Distribuées</h1>
+  <p>7 technologies · Fiches · QCM · Comparatif</p>
+  <div class="tech-pills" id="hero-pills"></div>
+</div>
+
+<div class="wrapper">
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('fiches',this)">📄 Fiches</button>
+    <button class="mode-tab" onclick="setMode('qcm',this)">🎯 QCM</button>
+    <button class="mode-tab" onclick="setMode('compare',this)">⚡ Comparatif</button>
+  </div>
+  <div id="fiches-section"><div class="tech-nav" id="tech-nav"></div><div id="fiche-content"></div></div>
+  <div id="qcm-section" class="hidden">
+    <div class="qcm-header">
+      <div class="score-display"><span class="score-big" id="score-num">0</span><span class="score-sub">/ <span id="score-tot">0</span> répondues</span></div>
+      <button class="reset-btn" onclick="resetQCM()">↺ Recommencer tout</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+    <div class="qcm-page-nav">
+      <button class="page-btn active" id="pbtn1" onclick="setQCMPage(1)">Série 1</button>
+      <button class="page-btn" id="pbtn2" onclick="setQCMPage(2)">Série 2</button>
+      <span class="page-label" id="page-label">Série 1 — 21 questions</span>
+    </div>
+    <div id="qcm-content"></div>
+    <div style="display:flex;gap:10px;margin-top:1rem;">
+      <button class="page-btn" id="prev-btn" onclick="setQCMPage(1)" disabled>← Précédent</button>
+      <button class="page-btn" id="next-btn" onclick="setQCMPage(2)">Suivant →</button>
+    </div>
+  </div>
+  <div id="compare-section" class="hidden"><div id="compare-content"></div></div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-text">Guide de révision · Bases de données distribuées</span>
+    <span class="footer-text">·</span>
+    <span class="signature">Illane</span>
+    <span class="footer-text">·</span>
+    <span class="footer-text">Bonne chance 🚀</span>
+  </div>
+</footer>
+
+<script>
+const techs = [
+  {
+    name:"MongoDB", emoji:"🍃", type:"Base documentaire",
+    color:"#38d9a9", colorBg:"rgba(56,217,169,0.12)", tagBg:"rgba(56,217,169,0.15)", tagColor:"#38d9a9",
+    quoi:"Base NoSQL orientée documents. Les données sont stockées en JSON/BSON dans des collections, sans schéma fixe imposé.",
+    quand:"Applications web, catalogues produits, gestion de contenu, données semi-structurées ou variables.",
+    concepts:["Document : unité de base, similaire à un objet JSON","Collection : ensemble de documents (≈ table SQL)","Base de données : ensemble de collections","BSON : format binaire de JSON, supporte plus de types","_id : identifiant unique obligatoire de chaque document","Schéma flexible : documents d'une même collection peuvent différer","Indexation : sur n'importe quel champ pour accélérer les requêtes","Agrégation : pipeline de transformation ($group, $match, $sort...)"],
+    syntaxe:[
+      ["Insérer un document","db.users.insertOne({ name: \"Alice\", age: 25 })"],
+      ["Insérer plusieurs","db.users.insertMany([{ name: \"Bob\" }, { name: \"Eve\" }])"],
+      ["Lire tous les docs","db.users.find()"],
+      ["Filtrer (age > 20)","db.users.find({ age: { $gt: 20 } })"],
+      ["Mettre à jour","db.users.updateOne({ name: \"Alice\" }, { $set: { age: 26 } })"],
+      ["Supprimer","db.users.deleteOne({ name: \"Alice\" })"],
+      ["Compter","db.users.countDocuments({ age: { $gt: 18 } })"],
+      ["Tri + limite","db.users.find().sort({ age: -1 }).limit(5)"],
+      ["Agrégation","db.orders.aggregate([\n  { $group: { _id: \"$city\", total: { $sum: \"$amount\" } } }\n])"],
+      ["Opérateurs comparaison","$eq, $ne, $gt, $gte, $lt, $lte, $in, $nin"],
+      ["Opérateurs logiques","$and, $or, $not, $nor"]
+    ],
+    avantages:["Schéma flexible (évolution facile)","Scalabilité horizontale","Requêtes riches et expressives","Large communauté"],
+    inconvenients:["Pas idéal pour données très relationnelles","Consomme plus de mémoire (BSON)","Transactions ACID limitées avant v4"],
+    deep: {
+      intro: "MongoDB est souvent la première base NoSQL qu'on découvre. Comprendre ses fondements aide à saisir pourquoi elle existe et quand l'utiliser.",
+      sections: [
+        {
+          title: "🔑 Pourquoi pas SQL ?",
+          body: "Dans une base SQL classique, tout est structuré en tables rigides avec des colonnes fixes. Si tu veux ajouter un champ à un utilisateur, tu dois modifier toute la table. MongoDB résout ça : chaque document est indépendant et peut avoir ses propres champs.",
+          analogy: "<strong>Analogie :</strong> SQL c'est comme un formulaire papier avec des cases fixes. MongoDB c'est une feuille libre où chaque personne écrit ce qu'elle veut — certains mettent un téléphone, d'autres pas.",
+          extra: ""
+        },
+        {
+          title: "📦 BSON vs JSON",
+          body: "JSON est lisible par l'humain mais limité en types (pas de dates natives, pas de binaire). MongoDB stocke en BSON qui est la version binaire du JSON, plus rapide à lire pour les machines et qui supporte des types supplémentaires : Date, ObjectId, Binary, Decimal128...",
+          analogy: "<strong>Important :</strong> Quand tu écris une requête MongoDB, tu utilises du JSON. Mais en interne, MongoDB stocke en BSON. La conversion est automatique.",
+          extra: ""
+        },
+        {
+          title: "🔗 Agrégation — comment ça marche ?",
+          body: "Le pipeline d'agrégation fonctionne comme une chaîne de montage. Chaque étape transforme les données et les passe à l'étape suivante. Les étapes principales sont :<br><br>• <code>$match</code> : filtrer (comme WHERE en SQL)<br>• <code>$group</code> : regrouper et calculer (comme GROUP BY)<br>• <code>$sort</code> : trier<br>• <code>$project</code> : choisir les champs à retourner<br>• <code>$limit</code> / <code>$skip</code> : pagination",
+          analogy: "<strong>Analogie :</strong> Imagine une usine avec des machines en série. Les documents entrent bruts, passent par $match (triage), $group (assemblage), $sort (rangement), et sortent transformés.",
+          extra: ""
+        },
+        {
+          title: "⚠️ Quand NE PAS utiliser MongoDB ?",
+          body: "MongoDB est mauvais choix si tes données sont très liées entre elles (ex: un système bancaire avec comptes, transactions, virements). Les jointures en MongoDB ($lookup) existent mais sont moins performantes. Pour ces cas : PostgreSQL ou MySQL sont plus adaptés.",
+          analogy: "<strong>Règle simple :</strong> si ton schéma ressemble à un arbre (objet avec sous-objets) → MongoDB. Si ça ressemble à un tableau croisé avec beaucoup de relations → SQL.",
+          extra: ""
+        }
+      ]
+    }
+  },
+  {
+    name:"ELK Stack", emoji:"🔍", type:"Recherche & Analytique",
+    color:"#4f8ef7", colorBg:"rgba(79,142,247,0.12)", tagBg:"rgba(79,142,247,0.15)", tagColor:"#4f8ef7",
+    quoi:"ELK = Elasticsearch + Logstash + Kibana. Suite pour ingestion, stockage, recherche full-text et visualisation de grandes quantités de données.",
+    quand:"Analyse de logs, monitoring d'applications, moteur de recherche, tableaux de bord temps réel.",
+    concepts:["Elasticsearch : moteur de recherche distribué basé sur Apache Lucene","Logstash : pipeline d'ingestion (collecter → transformer → envoyer)","Kibana : interface de visualisation et exploration","Index : stocke des documents JSON (≈ base de données)","Mapping : définition des types de champs d'un index","Shard : fragment d'un index réparti sur les nœuds","Replica : copie d'un shard pour la redondance","Nœud (Node) : serveur Elasticsearch","Cluster : ensemble de nœuds"],
+    syntaxe:[
+      ["Créer un index","PUT /my_index"],
+      ["Insérer un document","PUT /my_index/_doc/1\n{ \"title\": \"Guide NoSQL\", \"author\": \"Alice\" }"],
+      ["Recherche simple (match)","GET /my_index/_search\n{ \"query\": { \"match\": { \"title\": \"guide\" } } }"],
+      ["Multi-champ","GET /my_index/_search\n{ \"query\": { \"multi_match\": {\n    \"query\": \"guide\",\n    \"fields\": [\"title\", \"body\"] } } }"],
+      ["Filtre exact (term)","{ \"query\": { \"term\": { \"author\": \"Alice\" } } }"],
+      ["Plage de valeurs","{ \"query\": { \"range\": { \"age\": { \"gte\": 18, \"lte\": 65 } } } }"],
+      ["Agrégation","{ \"aggs\": { \"by_author\": { \"terms\": { \"field\": \"author\" } } } }"],
+      ["Supprimer un index","DELETE /my_index"],
+      ["Mise à jour partielle","POST /my_index/_update/1\n{ \"doc\": { \"title\": \"Nouveau titre\" } }"]
+    ],
+    avantages:["Full-text search très performant","Scalabilité horizontale","Visualisation avec Kibana","Analyse temps réel"],
+    inconvenients:["Pas conçu pour transactions ACID","Complexe à administrer","Consomme beaucoup de ressources"],
+    deep: {
+      intro: "La puissance de ELK vient du fait que les 3 outils se complètent parfaitement. Comprendre le rôle de chacun et comment ils fonctionnent ensemble est essentiel.",
+      sections: [
+        {
+          title: "🔄 Le flux ELK en pratique",
+          body: "Voici comment les données circulent dans ELK :<br><br>1. <strong>Logstash</strong> collecte les données (logs de serveur, bases de données, fichiers...) et les transforme (nettoyage, enrichissement, formatage)<br>2. <strong>Elasticsearch</strong> reçoit et indexe ces données pour les rendre consultables en millisecondes<br>3. <strong>Kibana</strong> se connecte à Elasticsearch pour visualiser et explorer les données",
+          analogy: "<strong>Analogie :</strong> Logstash = la caisse du supermarché (collecte et scanne tout), Elasticsearch = le stock organisé (retrouve n'importe quoi en secondes), Kibana = le tableau de bord du directeur (visualise tout).",
+          extra: ""
+        },
+        {
+          title: "🔍 Comment fonctionne la recherche full-text ?",
+          body: "Quand tu indexes un texte, Elasticsearch ne stocke pas juste le texte brut. Il le découpe en <em>tokens</em> (mots), supprime les stop words (le, la, de...), applique un stemming (chercher → cherch, recherche → recherch) et crée un index inversé.<br><br>Un <strong>index inversé</strong> c'est comme l'index à la fin d'un livre : au lieu de lire tout le livre, tu vas directement à la page qui contient le mot cherché.",
+          analogy: "<strong>Différence match vs term :</strong> <code>match</code> analyse le texte avant la recherche (insensible à la casse, stemming). <code>term</code> cherche la valeur exacte sans analyse — à utiliser pour les IDs, enums, mots-clés.",
+          extra: ""
+        },
+        {
+          title: "🏗️ Shards et Replicas — pourquoi c'est important ?",
+          body: "Un shard est un fragment d'index. Si ton index a 3 shards, les données sont réparties sur 3 morceaux. Ça permet de distribuer la charge sur plusieurs serveurs.<br><br>Un replica est une copie d'un shard. Si un nœud tombe, le replica prend le relais — haute disponibilité garantie.<br><br><strong>Règle :</strong> nombre de shards est fixé à la création (ne peut pas changer). Les replicas sont modifiables à tout moment.",
+          analogy: "<strong>À retenir pour l'examen :</strong> Plus de shards = meilleure parallelisation des requêtes. Plus de replicas = meilleure tolérance aux pannes. Les deux sont indépendants.",
+          extra: ""
+        },
+        {
+          title: "⚠️ Beats — le 4ème composant",
+          body: "Dans la pratique, ELK devient souvent ELKB ou 'Elastic Stack'. Beats est une famille d'agents légers installés sur les machines à surveiller pour envoyer des données directement à Elasticsearch (ou Logstash). Exemples : Filebeat (logs), Metricbeat (métriques système), Packetbeat (réseau).",
+          analogy: "<strong>Résumé :</strong> Beats collecte sur les machines → Logstash transforme → Elasticsearch indexe → Kibana visualise.",
+          extra: ""
+        }
+      ]
+    }
+  },
+  {
+    name:"Neo4j", emoji:"🕸️", type:"Base de données graphe",
+    color:"#b197fc", colorBg:"rgba(177,151,252,0.12)", tagBg:"rgba(177,151,252,0.15)", tagColor:"#b197fc",
+    quoi:"Base orientée graphe. Données représentées comme nœuds reliés par des relations. Langage de requête : Cypher.",
+    quand:"Réseaux sociaux, recommandations, détection de fraude, gestion de connaissances, navigation.",
+    concepts:["Nœud (Node) : entité avec labels et propriétés","Relation : lien typé et directionnel entre deux nœuds","Propriété : paire clé-valeur sur nœud ou relation","Label : catégorie d'un nœud (:Person, :Movie, :City...)","Chemin (Path) : suite de nœuds et relations","Traversée : parcours du graphe pour trouver des patterns","Cypher : langage de requête déclaratif de Neo4j","MATCH : clause principale pour trouver des patterns"],
+    syntaxe:[
+      ["Créer un nœud","CREATE (p:Person { name: \"Alice\", age: 30 })"],
+      ["Créer une relation","MATCH (a:Person {name:\"Alice\"}), (b:Person {name:\"Bob\"})\nCREATE (a)-[:KNOWS]->(b)"],
+      ["Trouver un nœud","MATCH (p:Person) WHERE p.name = \"Alice\" RETURN p"],
+      ["Traverser des relations","MATCH (a:Person)-[r:KNOWS]->(b:Person)\nRETURN a, r, b"],
+      ["Retourner propriétés","MATCH (p:Person) RETURN p.name, p.age"],
+      ["Longueur de chemin variable","MATCH (a)-[:KNOWS*1..3]->(b) RETURN a, b"],
+      ["Mettre à jour","MATCH (p:Person {name:\"Alice\"}) SET p.age = 31"],
+      ["Supprimer (nœud + relations)","MATCH (p:Person {name:\"Alice\"}) DETACH DELETE p"],
+      ["Agrégation","MATCH (p:Person)-[:KNOWS]->()\nRETURN p.name, count(*) AS nb_amis"],
+      ["Chemin le plus court","MATCH p=shortestPath((a:Person {name:\"Alice\"})-[:KNOWS*]-(b:Person {name:\"Bob\"}))\nRETURN p"]
+    ],
+    avantages:["Parfait pour données très relationnelles","Traversées rapides","Cypher intuitif et visuel","Visualisation graphique native"],
+    inconvenients:["Pas adapté aux données tabulaires","Scalabilité horizontale limitée","Moins répandu que MongoDB"],
+    deep: {
+      intro: "Neo4j est fondamentalement différent des autres bases. La façon de penser les données change complètement. Voici les clés pour vraiment comprendre.",
+      sections: [
+        {
+          title: "🧠 Penser en graphe, pas en table",
+          body: "Dans SQL, pour représenter 'Alice connaît Bob', tu crées une table Users et une table Friends avec une clé étrangère. Plus tu as de relations, plus tu as de jointures, plus c'est lent.<br><br>Dans Neo4j, la relation est un objet de première classe : <code>(Alice)-[:KNOWS]->(Bob)</code>. Pas de jointure — le lien est physiquement stocké entre les nœuds. Traverser 1 million de relations reste rapide.",
+          analogy: "<strong>Analogie :</strong> SQL = annuaire téléphonique (chercher un nom, puis chercher son numéro dans une autre liste). Neo4j = carte routière (tu suis les routes directement entre les villes).",
+          extra: ""
+        },
+        {
+          title: "🔤 Comprendre la syntaxe Cypher",
+          body: "Cypher est conçu pour ressembler visuellement à un graphe :<br><br>• <code>(n)</code> = un nœud<br>• <code>(n:Person)</code> = un nœud avec le label Person<br>• <code>(n:Person {name:'Alice'})</code> = avec une propriété<br>• <code>-[r]-></code> = une relation dirigée<br>• <code>-[r:KNOWS]-></code> = avec un type de relation<br>• <code>-[r:KNOWS {since: 2020}]-></code> = avec des propriétés sur la relation<br><br>La flèche <code>-></code> indique la direction. <code>-[r]-</code> sans flèche = relation dans les deux sens.",
+          analogy: "<strong>À retenir :</strong> MATCH trouve, CREATE crée, RETURN retourne, SET modifie, DELETE supprime, DETACH DELETE supprime avec toutes les relations. WHERE fonctionne comme en SQL.",
+          extra: ""
+        },
+        {
+          title: "📏 Les chemins à longueur variable",
+          body: "<code>MATCH (a)-[:KNOWS*1..3]->(b)</code> signifie : trouver b atteignable depuis a en 1 à 3 sauts via KNOWS.<br><br>C'est extrêmement puissant : 'qui peut être atteint depuis Alice en moins de 4 connexions ?'. En SQL, ça nécessiterait des requêtes récursives très complexes.",
+          analogy: "<strong>Cas concret (examen possible) :</strong> Détection de fraude — si A a envoyé de l'argent à B, qui a envoyé à C, qui a envoyé à A, c'est un cycle suspect. En Neo4j, c'est une requête simple. En SQL, c'est un cauchemar.",
+          extra: ""
+        },
+        {
+          title: "⚠️ DELETE vs DETACH DELETE",
+          body: "C'est un piège classique d'examen. <code>DELETE n</code> sur un nœud qui a encore des relations lève une erreur. Neo4j te force à gérer les relations explicitement.<br><br><code>DETACH DELETE n</code> supprime d'abord toutes les relations attachées au nœud, puis supprime le nœud. Toujours utiliser DETACH DELETE sauf si tu veux volontairement une erreur si des relations existent.",
+          analogy: "<strong>Rappel :</strong> Une relation dans Neo4j a toujours un type (KNOWS, LIKES, WORKS_AT...) et une direction. Elle peut aussi avoir des propriétés propres.",
+          extra: ""
+        }
+      ]
+    }
+  },
+  {
+    name:"Cassandra", emoji:"🏛️", type:"Base orientée colonnes",
+    color:"#f9a825", colorBg:"rgba(249,168,37,0.12)", tagBg:"rgba(249,168,37,0.15)", tagColor:"#f9a825",
+    quoi:"Base NoSQL distribuée orientée colonnes. Conçue pour haute disponibilité sans point de défaillance unique. Langage CQL (similaire au SQL).",
+    quand:"IoT, séries temporelles, journaux d'événements, applications nécessitant haute disponibilité mondiale.",
+    concepts:["Keyspace : espace de nommage (≈ base de données)","Table : structure avec schéma fixe","Partition Key : détermine sur quel nœud les données sont stockées","Clustering Key : définit l'ordre des données dans une partition","Primary Key = Partition Key + Clustering Key(s)","Réplication : replication_factor = nombre de copies","Consistance configurable : ONE, QUORUM, ALL","Théorème CAP : Cassandra → AP (disponibilité + tolérance)","Peer-to-peer : pas de nœud maître, tous égaux"],
+    syntaxe:[
+      ["Créer un keyspace","CREATE KEYSPACE school\nWITH replication = {\n  'class': 'SimpleStrategy',\n  'replication_factor': 3\n};"],
+      ["Utiliser le keyspace","USE school;"],
+      ["Créer une table simple","CREATE TABLE students (\n  id UUID PRIMARY KEY,\n  name TEXT,\n  age INT\n);"],
+      ["Table avec clustering","CREATE TABLE events (\n  user_id UUID,\n  event_time TIMESTAMP,\n  action TEXT,\n  PRIMARY KEY (user_id, event_time)\n) WITH CLUSTERING ORDER BY (event_time DESC);"],
+      ["Insérer","INSERT INTO students (id, name, age)\nVALUES (uuid(), 'Alice', 22);"],
+      ["Lire","SELECT * FROM students;"],
+      ["Filtrer (partition key)","SELECT * FROM events WHERE user_id = ?;"],
+      ["Mettre à jour","UPDATE students SET age = 23 WHERE id = ?;"],
+      ["Supprimer","DELETE FROM students WHERE id = ?;"],
+      ["TTL (expiration auto)","INSERT INTO logs (id, msg) VALUES (1, 'test')\nUSING TTL 3600;"]
+    ],
+    avantages:["Haute disponibilité (pas de SPOF)","Scalabilité horizontale excellente","Performances en écriture très élevées","Multi-datacenter natif"],
+    inconvenients:["Pas de JOINs","Requêtes doivent utiliser la Partition Key","Conception de schéma complexe","Pas de transactions ACID"],
+    deep: {
+      intro: "Cassandra est la plus complexe à comprendre de toutes car sa conception est radicalement différente. Le schéma se pense à l'envers par rapport au SQL.",
+      sections: [
+        {
+          title: "🗂️ Partition Key — le concept fondamental",
+          body: "Dans Cassandra, la Partition Key détermine sur quel nœud physique les données sont stockées. Toutes les lignes avec la même Partition Key sont sur le même nœud.<br><br>C'est pourquoi les requêtes DOIVENT utiliser la Partition Key : Cassandra ne peut pas scanner tous les nœuds (pas de full scan efficace).",
+          analogy: "<strong>Analogie :</strong> Imagine 10 classeurs (nœuds), chacun contient des dossiers. La Partition Key = la lettre initiale du nom. Tous les 'A' vont dans le classeur 1, tous les 'B' dans le classeur 2... Pour trouver un dossier, tu dois savoir dans quel classeur chercher.",
+          extra: ""
+        },
+        {
+          title: "📐 Clustering Key — l'ordre dans la partition",
+          body: "Une fois les données dans la même partition, la Clustering Key définit comment elles sont triées à l'intérieur.<br><br>Exemple : <code>PRIMARY KEY (user_id, event_time)</code><br>→ <code>user_id</code> = Partition Key (tous les events du même user = même nœud)<br>→ <code>event_time</code> = Clustering Key (events triés par date dans la partition)<br><br>Avec <code>CLUSTERING ORDER BY (event_time DESC)</code> les events récents arrivent en premier — parfait pour 'les 10 derniers events d'un user'.",
+          analogy: "<strong>Règle d'or Cassandra :</strong> pense d'abord aux REQUÊTES, pas aux données. Ton schéma doit être optimisé pour tes requêtes — l'inverse du SQL où on normalise d'abord.",
+          extra: ""
+        },
+        {
+          title: "🌐 Théorème CAP et niveaux de consistance",
+          body: "Le théorème CAP dit qu'un système distribué ne peut garantir que 2 des 3 propriétés suivantes : Consistance (C), Disponibilité (A), Tolérance aux partitions (P).<br><br>Cassandra est AP : si un nœud tombe, les autres continuent à servir (A), mais tu pourrais lire une donnée pas encore synchronisée (pas parfaitement consistant).<br><br>Levels de consistance :<br>• <code>ONE</code> : 1 nœud répond → rapide mais risqué<br>• <code>QUORUM</code> : majorité de nœuds → compromis<br>• <code>ALL</code> : tous les nœuds → lent mais sûr",
+          analogy: "<strong>Analogie :</strong> Tu as 3 copies d'un fichier sur 3 machines. QUORUM = 2 machines doivent confirmer avant de répondre. Si une machine est en panne, ça marche encore.",
+          extra: ""
+        },
+        {
+          title: "⚠️ Pas de JOINs — pourquoi et comment s'en sortir ?",
+          body: "Cassandra n'a pas de JOINs car rejoindre des données de plusieurs nœuds serait trop coûteux en réseau. La solution : la dénormalisation. On duplique les données dans plusieurs tables pour servir différents patterns de requêtes.<br><br>Exemple : si tu veux chercher par user_id ET par email, tu crées 2 tables avec des Partition Keys différentes. La duplication est intentionnelle.",
+          analogy: "<strong>TTL :</strong> Très utile pour des données qui expirent naturellement (sessions, cache, logs temporaires). Passé le TTL, Cassandra supprime automatiquement la donnée.",
+          extra: ""
+        }
+      ]
+    }
+  },
+  {
+    name:"Redis", emoji:"⚡", type:"Cache & Clé-Valeur",
+    color:"#ff6b6b", colorBg:"rgba(255,107,107,0.12)", tagBg:"rgba(255,107,107,0.15)", tagColor:"#ff6b6b",
+    quoi:"Base clé-valeur in-memory ultra-rapide. Supporte plusieurs structures de données. Utilisé comme cache, session store, broker de messages.",
+    quand:"Cache applicatif, sessions, pub/sub, files de tâches, leaderboards, compteurs temps réel.",
+    concepts:["In-memory : données en RAM → lecture/écriture en microsecondes","Persistance optionnelle : RDB (snapshots) ou AOF (log d'opérations)","String, List, Set, Sorted Set, Hash, Stream : structures disponibles","TTL (Time To Live) : expiration automatique des clés","Pub/Sub : messages publish/subscribe","Replication : maître-esclave","Cluster Redis : répartition des clés sur plusieurs nœuds","Atomic : toutes les opérations sont atomiques"],
+    syntaxe:[
+      ["String – SET / GET","SET username \"Alice\"\nGET username"],
+      ["SET avec TTL (secondes)","SET session:123 \"data\" EX 3600"],
+      ["Incrémenter un compteur","INCR counter\nINCRBY counter 5"],
+      ["Hash","HSET user:1 name \"Alice\" age 25\nHGET user:1 name\nHGETALL user:1"],
+      ["List (file FIFO)","RPUSH queue \"task1\" \"task2\"\nLPOP queue"],
+      ["Set","SADD tags \"python\" \"nosql\"\nSMEMBERS tags\nSISMEMBER tags \"python\""],
+      ["Sorted Set (leaderboard)","ZADD leaderboard 100 \"Alice\"\nZRANGE leaderboard 0 -1 WITHSCORES"],
+      ["Supprimer une clé","DEL username"],
+      ["Vérifier existence","EXISTS username"],
+      ["TTL restant","TTL session:123"]
+    ],
+    avantages:["Ultra-rapide (in-memory)","Structures de données riches","Simple à utiliser","Pub/Sub intégré"],
+    inconvenients:["Données limitées par la RAM","Pas de requêtes complexes","Persistance optionnelle (risque perte)","Pas pour données relationnelles"],
+    deep: {
+      intro: "Redis est souvent mal compris. On pense que c'est 'juste un cache' alors que ses structures de données en font un outil très polyvalent.",
+      sections: [
+        {
+          title: "🗃️ Les structures de données — quand utiliser quoi ?",
+          body: "<strong>String :</strong> valeur simple (compteur, texte, JSON sérialisé, session token)<br><strong>Hash :</strong> objet avec champs (profil utilisateur, config) — plus économe que stocker un JSON string si tu accèdes à des champs individuellement<br><strong>List :</strong> liste ordonnée, accès par index, LIFO/FIFO — file de tâches, historique de messages<br><strong>Set :</strong> ensemble sans doublons, opérations ensemblistes (union, intersection) — tags, utilisateurs uniques<br><strong>Sorted Set :</strong> set avec score numérique — leaderboard, priorité, fenêtre temporelle",
+          analogy: "<strong>Analogie :</strong> String = Post-it. Hash = fiche d'identité. List = file d'attente. Set = liste de présence. Sorted Set = classement sportif.",
+          extra: ""
+        },
+        {
+          title: "⏱️ TTL — la fonctionnalité la plus importante du cache",
+          body: "Le TTL (Time To Live) est en secondes. Passé ce délai, Redis supprime automatiquement la clé.<br><br><code>SET key value EX 3600</code> → expire dans 1h<br><code>EXPIRE key 3600</code> → ajouter TTL sur une clé existante<br><code>TTL key</code> → voir le temps restant (-1 = pas d'expiration, -2 = n'existe plus)<br><code>PERSIST key</code> → supprimer le TTL<br><br>C'est la base du cache : stocker le résultat d'une requête lourde avec un TTL, et le recalculer uniquement à expiration.",
+          analogy: "<strong>Pattern cache classique :</strong> 1) Chercher dans Redis → trouvé ? retourner. 2) Pas trouvé ? Calculer/requêter la DB. 3) Stocker dans Redis avec TTL. 4) Retourner le résultat.",
+          extra: ""
+        },
+        {
+          title: "📡 Pub/Sub — messagerie simple",
+          body: "Redis peut servir de broker de messages léger :<br><br><code>SUBSCRIBE channel1</code> → s'abonner à un canal<br><code>PUBLISH channel1 \"message\"</code> → envoyer un message<br><br>Tous les abonnés au canal reçoivent le message en temps réel. Utile pour notifications, chat simple, coordination entre microservices.",
+          analogy: "<strong>Différence avec une List :</strong> RPUSH/LPOP = file persistante (le message reste si personne ne l'écoute). Pub/Sub = radio (si tu n'écoutes pas au moment de l'émission, tu rates le message).",
+          extra: ""
+        },
+        {
+          title: "💾 Persistance — RDB vs AOF",
+          body: "<strong>RDB (Redis Database) :</strong> snapshot complet de la base à intervalle régulier (ex: toutes les heures). Rapide à charger, mais perd les données entre 2 snapshots.<br><br><strong>AOF (Append Only File) :</strong> log de toutes les opérations d'écriture. Plus de données préservées, mais plus lent et fichier plus grand.<br><br>On peut combiner les deux. Sans persistance activée, un redémarrage Redis = perte totale des données.",
+          analogy: "<strong>À retenir :</strong> Redis n'est pas une base de données principale pour des données critiques. C'est un complément — cache, session, compteur — où une légère perte est acceptable.",
+          extra: ""
+        }
+      ]
+    }
+  },
+  {
+    name:"CouchDB", emoji:"🛋️", type:"Documentaire REST",
+    color:"#ffa94d", colorBg:"rgba(255,169,77,0.12)", tagBg:"rgba(255,169,77,0.15)", tagColor:"#ffa94d",
+    quoi:"Base NoSQL documentaire accessible via API REST/HTTP native. Utilise JSON et MapReduce. Connu pour sa réplication peer-to-peer et son mode offline-first.",
+    quand:"Applications mobiles offline-first, synchronisation multi-appareils, CMS, API REST simples.",
+    concepts:["Document : JSON avec _id (obligatoire) et _rev (obligatoire)","_rev : numéro de révision pour la gestion des conflits","API REST native : chaque opération = requête HTTP","View : requêtes via fonctions MapReduce en JavaScript","Design Document : doc _design/xxx contenant les views","Mango Query : langage de requête simplifié (plus récent)","Réplication peer-to-peer : sync bidirectionnelle entre instances","MVCC : contrôle de concurrence multiversions (pas de verrou)"],
+    syntaxe:[
+      ["Créer une base","PUT http://localhost:5984/mydb"],
+      ["Insérer un document","POST http://localhost:5984/mydb\nContent-Type: application/json\n{ \"name\": \"Alice\", \"age\": 25 }"],
+      ["Lire un document","GET http://localhost:5984/mydb/{id}"],
+      ["Mettre à jour","PUT http://localhost:5984/mydb/{id}\n{ \"_rev\": \"1-abc\", \"name\": \"Alice\", \"age\": 26 }"],
+      ["Supprimer","DELETE http://localhost:5984/mydb/{id}?rev=1-abc"],
+      ["View MapReduce","// Design document :\n\"views\": {\n  \"by_name\": {\n    \"map\": \"function(doc) { emit(doc.name, doc); }\"\n  }\n}"],
+      ["Appeler une view","GET /mydb/_design/app/_view/by_name"],
+      ["Mango Query","POST http://localhost:5984/mydb/_find\n{ \"selector\": { \"age\": { \"$gt\": 18 } } }"],
+      ["Réplication","POST http://localhost:5984/_replicate\n{ \"source\": \"mydb\", \"target\": \"http://remote/mydb\" }"]
+    ],
+    avantages:["API REST native (aucun driver nécessaire)","Réplication offline/sync facile","Gestion des conflits intégrée","Tolérant aux pannes"],
+    inconvenients:["Performances inférieures à MongoDB","MapReduce complexe","Moins de fonctionnalités de requêtes","Communauté plus petite"],
+    deep: {
+      intro: "CouchDB est unique dans sa philosophie. Deux concepts sont vraiment différents des autres bases : le _rev et la réplication. Les comprendre c'est comprendre CouchDB.",
+      sections: [
+        {
+          title: "🔄 Le champ _rev — gestion des conflits",
+          body: "Chaque document CouchDB a un <code>_rev</code> (revision) qui ressemble à <code>1-a1b2c3d4</code>.<br>Le chiffre = numéro de révision. Le hash = signature du contenu.<br><br>Pour modifier un document, tu dois fournir le bon _rev. Si quelqu'un d'autre a modifié le document entre temps, son _rev a changé, et ta modification échoue — CouchDB détecte le conflit.",
+          analogy: "<strong>Analogie :</strong> C'est comme Google Docs avec contrôle de version. Chaque modification crée une nouvelle version. Si deux personnes modifient en même temps, CouchDB garde les deux versions et te laisse résoudre le conflit.",
+          extra: ""
+        },
+        {
+          title: "📱 Réplication offline-first — la vraie force",
+          body: "CouchDB peut répliquer sa base vers un appareil mobile (via PouchDB en JavaScript). L'utilisateur travaille offline, toutes ses modifications sont stockées localement avec leurs _rev. Quand la connexion revient, CouchDB synchronise et résout les conflits automatiquement.<br><br>C'est pourquoi CouchDB est populaire pour les apps mobiles qui doivent fonctionner sans internet.",
+          analogy: "<strong>Analogie :</strong> Comme Git — chaque copie est une version complète de la base. Tu travailles dessus, tu synchronises. Les conflits sont gérés comme des 'merge conflicts'.",
+          extra: ""
+        },
+        {
+          title: "🗺️ MapReduce — comment écrire des views",
+          body: "Une view CouchDB = une fonction JavaScript <code>map</code> + optionnellement <code>reduce</code>.<br><br>La fonction <code>map(doc)</code> est appelée pour chaque document. Tu appelles <code>emit(clé, valeur)</code> pour indexer ce document.<br><br>Exemple : <code>emit(doc.age, doc.name)</code> → crée un index par age.<br>Ensuite : <code>GET /_view/by_age?key=25</code> retourne tous les docs où age=25.<br><br>CouchDB recalcule les views uniquement quand nécessaire (lazy) et les met en cache.",
+          analogy: "<strong>Mango vs MapReduce :</strong> Mango Query (style MongoDB) est plus simple pour les requêtes courantes. MapReduce est plus puissant mais plus complexe. En examen, les deux peuvent être demandés.",
+          extra: ""
+        },
+        {
+          title: "⚠️ MVCC — pas de verrous",
+          body: "MVCC = Multi-Version Concurrency Control. Au lieu de verrouiller un document pendant une modification, CouchDB crée une nouvelle version. Les lecteurs continuent à lire l'ancienne version pendant qu'une nouvelle est écrite.<br><br>Avantage : pas de blocage, lectures toujours disponibles.<br>Inconvénient : les anciennes révisions s'accumulent sur le disque. La commande <code>POST /db/_compact</code> nettoie les vieilles révisions.",
+          analogy: "<strong>Rappel API :</strong> Toutes les opérations CouchDB sont des requêtes HTTP. GET = lire, PUT = créer/modifier, POST = créer (id auto), DELETE = supprimer. Pas besoin de driver spécial — curl suffit.",
+          extra: ""
+        }
+      ]
+    }
+  },
+  {
+    name:"DynamoDB", emoji:"☁️", type:"Clé-Valeur / Document (AWS)",
+    color:"#69db7c", colorBg:"rgba(105,219,124,0.12)", tagBg:"rgba(105,219,124,0.15)", tagColor:"#69db7c",
+    quoi:"Base NoSQL entièrement gérée par AWS. Clé-valeur et documentaire, haute performance, serverless. Aucune administration serveur nécessaire.",
+    quand:"Applications cloud AWS, e-commerce, gaming, IoT, serverless — scalabilité automatique.",
+    concepts:["Table : conteneur de données (pas de base de données parent)","Item : enregistrement dans une table (= ligne/document)","Attribut : champ d'un item","Partition Key (Hash Key) : détermine la partition de stockage","Sort Key (Range Key) : optionnelle, ordonne dans une partition","GSI (Global Secondary Index) : index sur attributs non-clés","LSI (Local Secondary Index) : index local à une partition","RCU / WCU : Read/Write Capacity Units","Provisioned vs On-demand : deux modes de capacité","DynamoDB Streams : capture des changements en temps réel"],
+    syntaxe:[
+      ["Créer une table (AWS CLI)","aws dynamodb create-table \\\n  --table-name Users \\\n  --attribute-definitions AttributeName=userId,AttributeType=S \\\n  --key-schema AttributeName=userId,KeyType=HASH \\\n  --billing-mode PAY_PER_REQUEST"],
+      ["Insérer un item","aws dynamodb put-item \\\n  --table-name Users \\\n  --item '{\"userId\":{\"S\":\"u1\"},\"name\":{\"S\":\"Alice\"}}'"],
+      ["Lire un item","aws dynamodb get-item \\\n  --table-name Users \\\n  --key '{\"userId\":{\"S\":\"u1\"}}'"],
+      ["Query (efficace)","aws dynamodb query \\\n  --table-name Orders \\\n  --key-condition-expression \"userId = :uid\" \\\n  --expression-attribute-values '{ \":uid\": {\"S\":\"u1\"} }'"],
+      ["Scan (lit toute la table)","aws dynamodb scan --table-name Users"],
+      ["Mettre à jour","aws dynamodb update-item \\\n  --table-name Users \\\n  --key '{\"userId\":{\"S\":\"u1\"}}' \\\n  --update-expression \"SET age = :a\" \\\n  --expression-attribute-values '{ \":a\": {\"N\":\"26\"} }'"],
+      ["Supprimer un item","aws dynamodb delete-item \\\n  --table-name Users \\\n  --key '{\"userId\":{\"S\":\"u1\"}}'"],
+      ["Types de données","S (String), N (Number), B (Binary)\nBOOL, NULL, L (List), M (Map), SS, NS"]
+    ],
+    avantages:["Entièrement géré (pas d'admin)","Scalabilité automatique","Performance constante (millisecondes)","Intégration native AWS"],
+    inconvenients:["Vendor lock-in AWS","Coût difficile à prévoir","Requêtes limitées sans index","Pas de JOINs ni agrégations complexes"],
+    deep: {
+      intro: "DynamoDB est la base de données d'AWS. Sa philosophie ressemble à Cassandra (Partition Key obligatoire, pas de JOINs) mais en mode cloud géré.",
+      sections: [
+        {
+          title: "🗝️ Partition Key et Sort Key — le duo central",
+          body: "Comme Cassandra, DynamoDB répartit les données par Partition Key. Toutes les données avec la même Partition Key se trouvent sur le même serveur.<br><br>La Sort Key permet d'avoir plusieurs items avec la même Partition Key mais différenciés par la Sort Key.<br><br>Exemple : <code>Partition Key = userId</code>, <code>Sort Key = orderDate</code><br>→ Toutes les commandes d'un utilisateur sont au même endroit, triées par date.",
+          analogy: "<strong>Analogie :</strong> La Partition Key = tiroir du classeur. La Sort Key = ordre des dossiers dans ce tiroir. Pour retrouver un dossier, tu dois savoir dans quel tiroir chercher.",
+          extra: ""
+        },
+        {
+          title: "🔍 Query vs Scan — différence cruciale",
+          body: "<strong>Query :</strong> utilise la Partition Key (et optionnellement la Sort Key). DynamoDB va directement à la bonne partition. Très efficace, coût fixe.<br><br><strong>Scan :</strong> lit TOUS les items de toute la table, puis filtre. Extrêmement coûteux en lectures (RCU) et en temps sur une grosse table.<br><br>Règle : toujours préférer Query. Scan = dernier recours ou développement.",
+          analogy: "<strong>À retenir pour l'examen :</strong> Si on te demande comment accéder efficacement aux données dans DynamoDB, la réponse est toujours : bien définir sa Partition Key pour que les requêtes fréquentes utilisent Query et pas Scan.",
+          extra: ""
+        },
+        {
+          title: "📊 GSI — résoudre le problème des accès multiples",
+          body: "Problème : tu as une table Users avec <code>userId</code> comme Partition Key. Comment chercher par email ?<br><br>Solution : créer un GSI (Global Secondary Index) sur l'attribut <code>email</code>. DynamoDB maintient automatiquement un index secondaire, et tu peux faire des Query dessus.<br><br>Un GSI a sa propre Partition Key (et Sort Key optionnelle), différente de la table principale.",
+          analogy: "<strong>LSI vs GSI :</strong> LSI = index avec la même Partition Key que la table (juste une autre Sort Key). GSI = index complètement indépendant avec sa propre Partition Key. LSI doit être créé à la création de la table. GSI peut être ajouté après.",
+          extra: ""
+        },
+        {
+          title: "⚠️ RCU/WCU et modes de capacité",
+          body: "<strong>Provisioned :</strong> tu réserves un nombre fixe de RCU/WCU par seconde. Moins cher si charge prévisible, mais tu payes même si inutilisé. 1 RCU = lire 4 KB. 1 WCU = écrire 1 KB.<br><br><strong>On-demand :</strong> tu payes uniquement ce que tu consommes, par requête. Plus cher à l'unité mais zéro gestion de capacité.<br><br>DynamoDB Streams = journal ordonné des modifications sur une table, exploitable par AWS Lambda pour déclencher des actions en temps réel.",
+          analogy: "<strong>Vendor lock-in :</strong> DynamoDB est 100% AWS. Pas d'équivalent open-source identique. Si tu migres vers Azure ou GCP, il faut tout réécrire. C'est le principal inconvénient.",
+          extra: ""
+        }
+      ]
+    }
+  }
+];
+
+const qcmPage1 = [
+  {tech:"MongoDB",color:"#38d9a9",q:"Quel est le format de stockage natif de MongoDB ?",opts:["XML","BSON","CSV","Parquet"],ans:1,expl:"MongoDB stocke les données en BSON (Binary JSON), une version binaire du JSON qui supporte plus de types de données comme Date, ObjectId, Binary."},
+  {tech:"MongoDB",color:"#38d9a9",q:"Comment filtrer les documents ayant un age > 20 dans MongoDB ?",opts:["db.users.find({ age: 20 })","db.users.find({ age: { $gt: 20 } })","db.users.where(age > 20)","db.users.select({ age > 20 })"],ans:1,expl:"En MongoDB, $gt signifie 'greater than'. Les opérateurs de comparaison s'écrivent toujours avec $ : $gt, $lt, $gte, $lte, $eq, $ne."},
+  {tech:"MongoDB",color:"#38d9a9",q:"Dans MongoDB, qu'est-ce qu'une collection ?",opts:["Un document unique","L'équivalent d'une table contenant des documents","Une base de données","Un index de recherche"],ans:1,expl:"Une collection MongoDB est un regroupement de documents, comparable à une table en SQL. La différence : pas de schéma fixe."},
+  {tech:"ELK",color:"#4f8ef7",q:"Dans l'acronyme ELK, à quoi correspond le 'K' ?",opts:["Kafka","Kubernetes","Kibana","Keystore"],ans:2,expl:"ELK = Elasticsearch (moteur de recherche) + Logstash (ingestion de données) + Kibana (visualisation et dashboards)."},
+  {tech:"ELK",color:"#4f8ef7",q:"Quel composant ELK sert à visualiser les données ?",opts:["Elasticsearch","Logstash","Kibana","Beats"],ans:2,expl:"Kibana est l'interface web de visualisation. Elle permet de créer des dashboards, des graphiques et d'explorer les données indexées dans Elasticsearch."},
+  {tech:"ELK",color:"#4f8ef7",q:"Dans Elasticsearch, qu'est-ce qu'un shard ?",opts:["Un document JSON","Un fragment d'index réparti sur les nœuds","Un type de requête full-text","Un nœud maître du cluster"],ans:1,expl:"Un shard est une partition d'un index Elasticsearch. L'index est découpé en shards distribués sur différents nœuds pour paralléliser les requêtes."},
+  {tech:"Neo4j",color:"#b197fc",q:"Quel est le langage de requête natif de Neo4j ?",opts:["GraphQL","SPARQL","Cypher","Gremlin"],ans:2,expl:"Cypher est le langage déclaratif de Neo4j. Il utilise des patterns visuels comme (a)-[:RELATION]->(b) pour décrire des traversées de graphe."},
+  {tech:"Neo4j",color:"#b197fc",q:"Dans Neo4j, quelle clause principale permet de trouver des patterns ?",opts:["SELECT","FIND","MATCH","SEARCH"],ans:2,expl:"MATCH est la clause principale de Cypher pour rechercher des patterns de nœuds et de relations dans le graphe."},
+  {tech:"Neo4j",color:"#b197fc",q:"Comment supprimer un nœud ET toutes ses relations dans Neo4j ?",opts:["DELETE (n)","REMOVE (n)","DETACH DELETE n","DROP NODE n"],ans:2,expl:"DETACH DELETE supprime le nœud et toutes ses relations. DELETE seul lève une erreur si des relations existent encore."},
+  {tech:"Cassandra",color:"#f9a825",q:"Quel est l'équivalent d'une base de données dans Cassandra ?",opts:["Namespace","Keyspace","Schema","Cluster"],ans:1,expl:"Dans Cassandra, on parle de Keyspace. Il contient les tables et définit la stratégie de réplication (SimpleStrategy ou NetworkTopologyStrategy)."},
+  {tech:"Cassandra",color:"#f9a825",q:"Selon le théorème CAP, quelles propriétés Cassandra privilégie-t-il ?",opts:["CP (Consistance + Partition)","CA (Consistance + Disponibilité)","AP (Disponibilité + Partition)","Toutes les trois simultanément"],ans:2,expl:"Cassandra privilégie AP : Disponibilité (Availability) + Tolérance aux partitions (Partition tolerance). La consistance est configurable mais sacrifiée par défaut."},
+  {tech:"Cassandra",color:"#f9a825",q:"Dans Cassandra, la PRIMARY KEY est composée de :",opts:["Seulement la Partition Key","La Partition Key + éventuellement une ou des Clustering Keys","Un UUID auto-généré toujours","Le nom de la table + un entier auto-incrémenté"],ans:1,expl:"Primary Key = Partition Key (obligatoire, détermine la partition) + Clustering Key(s) (optionnelles, définissent l'ordre dans la partition)."},
+  {tech:"Redis",color:"#ff6b6b",q:"Redis stocke ses données principalement :",opts:["Sur disque dur (HDD)","En mémoire vive (RAM)","Dans le cloud uniquement","En base de données relationnelle"],ans:1,expl:"Redis est une base de données in-memory. Les données sont stockées en RAM, ce qui explique ses performances extrêmes (~microsecondes)."},
+  {tech:"Redis",color:"#ff6b6b",q:"Quelle structure Redis est idéale pour un classement avec scores (leaderboard) ?",opts:["List","Set","Sorted Set (ZSET)","Hash"],ans:2,expl:"Le Sorted Set associe chaque membre à un score numérique. ZADD pour ajouter, ZRANGE pour récupérer dans l'ordre. Parfait pour les leaderboards."},
+  {tech:"Redis",color:"#ff6b6b",q:"Quelle commande Redis définit une clé avec expiration automatique après 60 secondes ?",opts:["SET key value EXPIRE 60","SET key value EX 60","SETEX key value 60","Les deux B et C sont correctes"],ans:3,expl:"SET key value EX 60 (syntaxe Redis ≥2.6) et SETEX key 60 value sont deux syntaxes valides. Les deux définissent une clé expirant après 60 secondes."},
+  {tech:"CouchDB",color:"#ffa94d",q:"Comment accède-t-on à CouchDB par défaut ?",opts:["Via un driver JDBC propriétaire","Via une API REST/HTTP native","Via un shell Cypher","Via un protocole binaire propriétaire"],ans:1,expl:"CouchDB expose une API REST native. Toutes les opérations (CRUD, réplication, admin) se font via des requêtes HTTP standard (GET, PUT, POST, DELETE)."},
+  {tech:"CouchDB",color:"#ffa94d",q:"À quoi sert le champ '_rev' dans un document CouchDB ?",opts:["C'est la clé primaire auto-générée","C'est le numéro de révision utilisé pour la gestion des conflits","C'est la date de dernière modification","C'est un champ de révision manuelle par l'utilisateur"],ans:1,expl:"_rev identifie la version du document. Pour mettre à jour ou supprimer, il faut fournir le bon _rev. C'est le mécanisme MVCC de CouchDB."},
+  {tech:"CouchDB",color:"#ffa94d",q:"Quel mécanisme CouchDB utilise classiquement pour les requêtes complexes ?",opts:["SQL classique","Cypher","MapReduce en JavaScript","Pipeline d'agrégation style MongoDB"],ans:2,expl:"CouchDB utilise MapReduce (en JavaScript) dans des Design Documents pour créer des views indexées. Mango Query est l'alternative plus récente et plus simple."},
+  {tech:"DynamoDB",color:"#69db7c",q:"DynamoDB est un service de quel fournisseur cloud ?",opts:["Google Cloud (GCP)","Microsoft Azure","Amazon Web Services (AWS)","IBM Cloud"],ans:2,expl:"DynamoDB est le service NoSQL entièrement géré d'Amazon Web Services. Il s'intègre nativement dans l'écosystème AWS (Lambda, S3, API Gateway...)."},
+  {tech:"DynamoDB",color:"#69db7c",q:"Quelle est la différence fondamentale entre Query et Scan dans DynamoDB ?",opts:["Aucune différence de performance","Query utilise la Partition Key (efficace), Scan lit toute la table (coûteux)","Scan est plus rapide car parallélisé","Query nécessite obligatoirement un GSI"],ans:1,expl:"Query cible une partition via la Partition Key → efficace et coût maîtrisé. Scan lit TOUS les items → très coûteux en RCU et lent sur une grosse table."},
+  {tech:"DynamoDB",color:"#69db7c",q:"Qu'est-ce qu'un GSI dans DynamoDB ?",opts:["Global Storage Index — stockage redondant","Global Secondary Index — permet des requêtes sur des attributs non-clés","Generic System Interface — API d'accès bas niveau","Global Scan Index — index pour optimiser les Scans"],ans:1,expl:"Un Global Secondary Index (GSI) crée un index secondaire avec sa propre Partition Key. Il permet des Query efficaces sur des attributs autres que la Partition Key principale."}
+];
+
+const qcmPage2 = [
+  {tech:"MongoDB",color:"#38d9a9",q:"Quelle méthode MongoDB permet de mettre à jour UN seul document ?",opts:["db.col.update()","db.col.updateOne()","db.col.modifyOne()","db.col.setOne()"],ans:1,expl:"updateOne() met à jour le premier document correspondant. updateMany() met à jour tous les documents correspondants. La méthode update() est dépréciée."},
+  {tech:"MongoDB",color:"#38d9a9",q:"Dans MongoDB, l'opérateur $set dans updateOne permet de :",opts:["Créer un nouveau document","Remplacer tout le document","Modifier seulement les champs spécifiés","Supprimer les champs spécifiés"],ans:2,expl:"$set modifie uniquement les champs indiqués, sans toucher aux autres. Sans $set, le document entier serait remplacé par le nouvel objet."},
+  {tech:"MongoDB",color:"#38d9a9",q:"Quelle étape du pipeline d'agrégation MongoDB équivaut à un GROUP BY SQL ?",opts:["$match","$group","$sort","$project"],ans:1,expl:"$group regroupe les documents par un champ (_id) et applique des accumulateurs ($sum, $avg, $count, $max, $min). $match équivaut à WHERE."},
+  {tech:"ELK",color:"#4f8ef7",q:"Dans Elasticsearch, quelle est la différence entre 'match' et 'term' ?",opts:["Aucune différence","match analyse le texte (full-text), term cherche la valeur exacte","term est plus lent que match","match est réservé aux champs numériques"],ans:1,expl:"match analyse le texte avant de chercher (tokenization, stemming, casse) → pour texte libre. term cherche la valeur exacte sans analyse → pour IDs, enums, valeurs exactes."},
+  {tech:"ELK",color:"#4f8ef7",q:"Quel est le rôle de Logstash dans la suite ELK ?",opts:["Stocker et indexer les données","Visualiser les données sous forme de dashboard","Collecter, transformer et envoyer les données vers Elasticsearch","Gérer la haute disponibilité du cluster"],ans:2,expl:"Logstash est le pipeline d'ingestion : il collecte des données de multiples sources (logs, bases, fichiers), les transforme (parse, enrichit, filtre), puis les envoie à Elasticsearch."},
+  {tech:"ELK",color:"#4f8ef7",q:"Qu'est-ce qu'un replica dans Elasticsearch ?",opts:["Un nœud maître secondaire","Une copie d'un shard pour la redondance et la tolérance aux pannes","Un type de requête de sauvegarde","Un index de secours"],ans:1,expl:"Un replica est une copie d'un shard. Si un nœud tombe, le replica prend le relais. Les replicas améliorent aussi les performances de lecture (les requêtes peuvent être distribuées sur les replicas)."},
+  {tech:"Neo4j",color:"#b197fc",q:"Dans Cypher (Neo4j), que signifie la syntaxe -[:KNOWS*1..3]-> ?",opts:["Relation KNOWS avec propriété entre 1 et 3","Chemin de 1 à 3 sauts via la relation KNOWS","Relation KNOWS créée 3 fois","Erreur de syntaxe"],ans:1,expl:"*1..3 signifie 'de 1 à 3 sauts'. -[:KNOWS*1..3]-> trouve tous les nœuds atteignables depuis la source en 1, 2 ou 3 traversées de la relation KNOWS."},
+  {tech:"Neo4j",color:"#b197fc",q:"Quelle est la clause Cypher pour modifier la propriété d'un nœud existant ?",opts:["UPDATE ... SET ...","MODIFY ... WITH ...","MATCH ... SET ...","ALTER ... SET ..."],ans:2,expl:"En Cypher : MATCH (n:Person {name:'Alice'}) SET n.age = 31. On utilise MATCH pour trouver le nœud, puis SET pour modifier ses propriétés."},
+  {tech:"Neo4j",color:"#b197fc",q:"Dans Neo4j, qu'est-ce qu'un label ?",opts:["Le nom d'une propriété","Une catégorie/type attribué à un nœud (ex: :Person, :Movie)","Le nom d'une relation","L'identifiant unique d'un nœud"],ans:1,expl:"Un label catégorise un nœud. Un nœud peut avoir plusieurs labels : (n:Person:Employee). Ils servent à filtrer les nœuds dans les requêtes MATCH."},
+  {tech:"Cassandra",color:"#f9a825",q:"Pourquoi Cassandra n'a-t-il pas de JOINs ?",opts:["C'est un oubli de conception","Parce que les données sont réparties sur plusieurs nœuds, un JOIN nécessiterait de transférer trop de données entre nœuds","Les JOINs sont remplacés par MapReduce","Pour des raisons de licence"],ans:1,expl:"Dans un système distribué, un JOIN entre deux tables pourrait nécessiter de ramener des données de dizaines de nœuds différents — coût réseau prohibitif. La solution Cassandra : dénormaliser et dupliquer les données."},
+  {tech:"Cassandra",color:"#f9a825",q:"Que signifie 'CLUSTERING ORDER BY (event_time DESC)' dans Cassandra ?",opts:["Trie les résultats d'une requête SELECT","Définit l'ordre de stockage physique des données dans la partition","Crée un index secondaire sur event_time","Trie par ordre décroissant uniquement lors des insertions"],ans:1,expl:"CLUSTERING ORDER BY définit l'ordre physique de stockage des lignes dans une partition. DESC = les événements les plus récents en premier. Cela rend les requêtes 'les N derniers événements' très efficaces."},
+  {tech:"Cassandra",color:"#f9a825",q:"Dans Cassandra, qu'est-ce que le niveau de consistance QUORUM ?",opts:["Un seul nœud doit répondre","Tous les nœuds doivent répondre","La majorité des nœuds (> moitié) doit confirmer","Le nœud maître seulement répond"],ans:2,expl:"QUORUM = majority = (replication_factor / 2) + 1 nœuds doivent répondre. C'est un bon compromis entre performance (ONE) et sécurité (ALL). Si un nœud tombe, QUORUM fonctionne encore."},
+  {tech:"Redis",color:"#ff6b6b",q:"Quelle commande Redis ajoute un élément à la fin d'une List ?",opts:["LADD","RPUSH","APPEND","PUSH"],ans:1,expl:"RPUSH (Right Push) ajoute à la fin. LPUSH (Left Push) ajoute au début. LPOP retire du début, RPOP retire de la fin. RPUSH + LPOP = file FIFO."},
+  {tech:"Redis",color:"#ff6b6b",q:"Dans Redis, quelle est la différence entre un Set et un Sorted Set ?",opts:["Aucune différence","Set = sans doublons sans ordre. Sorted Set = sans doublons avec un score numérique définissant l'ordre","Set est trié alphabétiquement, Sorted Set est trié par insertion","Set stocke des strings, Sorted Set stocke des nombres"],ans:1,expl:"Set : ensemble de membres uniques non ordonnés. Sorted Set (ZSET) : chaque membre a un score numérique qui définit son ordre. ZADD, ZRANGE, ZSCORE sont les commandes clés."},
+  {tech:"Redis",color:"#ff6b6b",q:"Qu'est-ce que le mode Pub/Sub dans Redis ?",opts:["Un système de backup publique/privé","Un modèle publish/subscribe où les abonnés reçoivent les messages en temps réel","Un mode de réplication public/synchronisé","Un système de cache public partagé"],ans:1,expl:"Pub/Sub : PUBLISH channel message envoie à tous les abonnés. SUBSCRIBE channel s'abonne. Contrairement aux Lists, si personne n'écoute au moment du PUBLISH, le message est perdu."},
+  {tech:"CouchDB",color:"#ffa94d",q:"Qu'est-ce qu'un Design Document dans CouchDB ?",opts:["Un document qui documente le schéma de la base","Un document spécial (_design/xxx) qui contient les Views et fonctions de validation","Un document créé par l'équipe de design","Un document en lecture seule"],ans:1,expl:"Un Design Document (_design/nom) est un document spécial qui contient les définitions des views MapReduce, les fonctions de validation, et les filtres de réplication. Il est stocké comme un document normal mais traité spécialement."},
+  {tech:"CouchDB",color:"#ffa94d",q:"Qu'est-ce que le MVCC dans CouchDB ?",opts:["Multi-Version Concurrency Control : gestion sans verrou via les révisions","Most Valuable Concurrent Control : mécanisme de cache","Multi-Value Cache Control : type d'index","Managed Version Control Configuration : outil d'administration"],ans:0,expl:"MVCC = Multi-Version Concurrency Control. Au lieu de verrouiller un document, CouchDB crée une nouvelle version (_rev). Les lecteurs continuent à lire l'ancienne version pendant l'écriture — pas de blocage."},
+  {tech:"CouchDB",color:"#ffa94d",q:"Pour mettre à jour un document CouchDB, quelle information est obligatoire ?",opts:["Seulement l'_id du document","L'_id et le bon _rev du document","L'_id et le contenu complet uniquement","Aucune — CouchDB détecte automatiquement"],ans:1,expl:"Pour PUT (mise à jour) sur CouchDB, il faut l'_id dans l'URL ET le _rev correct dans le body. Si le _rev ne correspond pas (quelqu'un a modifié entre temps), CouchDB retourne une erreur 409 Conflict."},
+  {tech:"DynamoDB",color:"#69db7c",q:"Quelle est la différence entre GSI et LSI dans DynamoDB ?",opts:["Aucune différence fonctionnelle","GSI = index global avec sa propre Partition Key. LSI = index local avec la même Partition Key que la table","GSI est créé automatiquement, LSI est manuel","GSI est gratuit, LSI est payant"],ans:1,expl:"LSI (Local Secondary Index) partage la Partition Key de la table, ajoute une Sort Key différente. Doit être créé avec la table. GSI (Global Secondary Index) a sa propre Partition Key, peut être ajouté après."},
+  {tech:"DynamoDB",color:"#69db7c",q:"Dans DynamoDB, que signifie 'on-demand' comme mode de capacité ?",opts:["La base est accessible seulement à la demande","Tu payes uniquement les requêtes consommées, sans réserver de capacité à l'avance","La capacité est allouée automatiquement et facturée à l'heure","Mode réservé pour les applications à faible trafic"],ans:1,expl:"On-demand = pas de provisionnement, tu payes par requête (RCU/WCU consommée). Idéal pour trafic imprévisible. Provisioned = tu réserves un débit fixe (RCU/WCU/sec), moins cher si trafic prévisible."},
+  {tech:"DynamoDB",color:"#69db7c",q:"Qu'est-ce que DynamoDB Streams ?",opts:["Un service de streaming vidéo AWS","Un journal ordonné des modifications sur une table, exploitable en temps réel","Un outil de migration de données","Un type de requête en temps réel"],ans:1,expl:"DynamoDB Streams capture toutes les modifications (INSERT, UPDATE, DELETE) sur une table dans un journal ordonné. Très utilisé avec AWS Lambda pour déclencher des actions en temps réel sur chaque changement."}
+];
+
+const compareRows = [
+  {name:"MongoDB",model:"Documentaire",lang:"MQL (JS)",cap:"CP",use:"Apps web, CMS",entities:"Collection / Document"},
+  {name:"Elasticsearch",model:"Doc / Full-text",lang:"REST + DSL",cap:"CP",use:"Logs, recherche",entities:"Index / Document"},
+  {name:"Neo4j",model:"Graphe",lang:"Cypher",cap:"CA",use:"Réseaux, reco",entities:"Nœud / Relation"},
+  {name:"Cassandra",model:"Colonnes larges",lang:"CQL",cap:"AP",use:"IoT, time-series",entities:"Keyspace / Table"},
+  {name:"Redis",model:"Clé-Valeur (RAM)",lang:"Commandes Redis",cap:"AP",use:"Cache, sessions",entities:"Clé / Valeur"},
+  {name:"CouchDB",model:"Documentaire REST",lang:"HTTP / Mango",cap:"AP",use:"Mobile offline",entities:"Database / Document"},
+  {name:"DynamoDB",model:"Clé-Valeur / Doc",lang:"AWS SDK / CLI",cap:"AP/CP (config)",use:"Cloud AWS, serverless",entities:"Table / Item"}
+];
+
+const memos = [
+  {icon:"⚡",title:"Plus rapide",desc:"Redis (in-memory, microsecondes)"},
+  {icon:"🕸️",title:"Données relationnelles",desc:"Neo4j (graphe, traversées)"},
+  {icon:"🔍",title:"Full-text search",desc:"Elasticsearch / ELK Stack"},
+  {icon:"📡",title:"Haute dispo / IoT",desc:"Cassandra (AP, pas de SPOF)"},
+  {icon:"☁️",title:"Cloud AWS natif",desc:"DynamoDB (serverless)"},
+  {icon:"📱",title:"Offline / sync mobile",desc:"CouchDB (réplication P2P)"},
+  {icon:"🌐",title:"Apps web générales",desc:"MongoDB (flexible, populaire)"}
+];
+
+let currentTech = 0;
+let scoresP1=0, scoresP2=0, answeredP1=0, answeredP2=0;
+let answeredSetP1 = new Set(), answeredSetP2 = new Set();
+let currentQCMPage = 1;
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Hero pills
+techs.forEach((t,i) => {
+  const b = document.createElement('button');
+  b.className='tech-pill';
+  b.textContent = t.emoji+' '+t.name;
+  b.style.cssText=`border-color:${t.color};color:${t.color};`;
+  b.onclick=()=>{ setMode('fiches',document.querySelector('.mode-tab')); showTech(i); };
+  document.getElementById('hero-pills').appendChild(b);
+});
+
+// Tech nav
+techs.forEach((t,i) => {
+  const b = document.createElement('button');
+  b.className='tech-btn'+(i===0?' active':'');
+  b.textContent=t.emoji+' '+t.name;
+  if(i===0){b.style.background=t.color;b.style.borderColor=t.color;b.style.color='#0a0e1a';}
+  b.onclick=()=>showTech(i);
+  document.getElementById('tech-nav').appendChild(b);
+});
+
+function showTech(idx){
+  currentTech=idx;
+  document.querySelectorAll('.tech-btn').forEach((b,i)=>{
+    b.classList.toggle('active',i===idx);
+    b.style.background=i===idx?techs[idx].color:'';
+    b.style.borderColor=i===idx?techs[idx].color:'';
+    b.style.color=i===idx?'#0a0e1a':'';
+  });
+  renderFiche(techs[idx]);
+}
+
+function renderFiche(t){
+  const deepId='deep-'+t.name.replace(/\s/g,'');
+  let deepSections = t.deep.sections.map((s,i)=>`
+    <div class="deep-section">
+      <h4>${s.title}</h4>
+      <p>${s.body}</p>
+      <div class="analogy-box">${s.analogy}</div>
+      ${s.extra?`<p>${s.extra}</p>`:''}
+    </div>`).join('<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">');
+
+  document.getElementById('fiche-content').innerHTML=`
+  <div class="card">
+    <div class="card-header">
+      <div class="tech-icon" style="background:${t.colorBg};font-size:26px;">${t.emoji}</div>
+      <div><h2 style="color:${t.color}">${t.name}</h2><span class="type-tag" style="background:${t.tagBg};color:${t.tagColor}">${t.type}</span></div>
+    </div>
+    <div class="section-title">C'est quoi ?</div><p>${t.quoi}</p>
+    <div class="section-title">Quand l'utiliser ?</div><p>${t.quand}</p>
+  </div>
+  <div class="card">
+    <div class="section-title">Concepts clés à retenir</div>
+    <ul>${t.concepts.map(c=>`<li>${c}</li>`).join('')}</ul>
+    <button class="deep-toggle" id="btn-${deepId}" onclick="toggleDeep('${deepId}')">
+      <span>🔬 Approfondir — explications détaillées et analogies</span>
+      <span class="arrow">▼</span>
+    </button>
+    <div class="deep-content" id="${deepId}">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">${t.deep.intro}</p>
+      ${deepSections}
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">Syntaxe essentielle</div>
+    ${t.syntaxe.map(([label,code])=>`<div class="syntax-label">// ${label}</div><pre>${esc(code)}</pre>`).join('')}
+  </div>
+  <div class="card">
+    <div class="pros-cons">
+      <div class="pros-cons-box pros"><h4>✅ Avantages</h4><ul>${t.avantages.map(a=>`<li>${a}</li>`).join('')}</ul></div>
+      <div class="pros-cons-box cons"><h4>⚠️ Limites</h4><ul>${t.inconvenients.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+    </div>
+  </div>`;
+}
+
+function toggleDeep(id){
+  const content=document.getElementById(id);
+  const btn=document.getElementById('btn-'+id);
+  const open=content.classList.toggle('visible');
+  btn.classList.toggle('open',open);
+  if(open) content.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function setQCMPage(page){
+  currentQCMPage=page;
+  document.getElementById('pbtn1').classList.toggle('active',page===1);
+  document.getElementById('pbtn2').classList.toggle('active',page===2);
+  document.getElementById('page-label').textContent=`Série ${page} — 21 questions`;
+  document.getElementById('prev-btn').disabled=page===1;
+  document.getElementById('next-btn').disabled=page===2;
+  renderQCMPage(page);
+  updateScore();
+}
+
+function renderQCMPage(page){
+  const data=page===1?qcmPage1:qcmPage2;
+  const prefix=page===1?'p1':'p2';
+  const aSet=page===1?answeredSetP1:answeredSetP2;
+  let html='';
+  data.forEach((q,i)=>{
+    html+=`<div class="qcm-card">
+      <div class="qcm-q-label" style="color:${q.color}">${q.tech}</div>
+      <div class="qcm-q">${i+1}. ${q.q}</div>
+      ${q.opts.map((o,oi)=>`<button class="qcm-opt" id="${prefix}-opt-${i}-${oi}" onclick="answer(${i},${oi},${page})"${aSet.has(i)?' disabled':''} >${o}</button>`).join('')}
+      <div class="qcm-expl" id="${prefix}-expl-${i}" style="${aSet.has(i)?'display:block':''}">${aSet.has(i)?`<strong>Explication :</strong> ${q.expl}`:''}</div>
+    </div>`;
+  });
+  document.getElementById('qcm-content').innerHTML=html;
+  // Re-apply styling for already answered
+  if(aSet.size>0){
+    const data2=page===1?qcmPage1:qcmPage2;
+    aSet.forEach(qi=>{
+      // We need to know what was answered — store it
+    });
+  }
+}
+
+function answer(qi,oi,page){
+  const data=page===1?qcmPage1:qcmPage2;
+  const prefix=page===1?'p1':'p2';
+  const aSet=page===1?answeredSetP1:answeredSetP2;
+  if(aSet.has(qi)) return;
+  aSet.add(qi);
+  const q=data[qi];
+  const correct=q.ans===oi;
+  if(page===1){if(correct)scoresP1++;answeredP1++;}
+  else{if(correct)scoresP2++;answeredP2++;}
+  q.opts.forEach((_,o)=>{
+    const btn=document.getElementById(`${prefix}-opt-${qi}-${o}`);
+    if(!btn)return;
+    btn.disabled=true;
+    if(o===oi&&correct)btn.classList.add('correct');
+    else if(o===oi)btn.classList.add('wrong');
+    else if(o===q.ans)btn.classList.add('reveal');
+  });
+  const expl=document.getElementById(`${prefix}-expl-${qi}`);
+  if(expl){expl.innerHTML=`<strong>Explication :</strong> ${q.expl}`;expl.style.display='block';}
+  updateScore();
+}
+
+function updateScore(){
+  const totalAnswered=answeredP1+answeredP2;
+  const totalScore=scoresP1+scoresP2;
+  document.getElementById('score-num').textContent=totalScore;
+  document.getElementById('score-tot').textContent=totalAnswered;
+  document.getElementById('prog').style.width=(totalAnswered/42*100)+'%';
+}
+
+function resetQCM(){
+  scoresP1=0;scoresP2=0;answeredP1=0;answeredP2=0;
+  answeredSetP1=new Set();answeredSetP2=new Set();
+  currentQCMPage=1;
+  setQCMPage(1);
+}
+
+function renderCompare(){
+  const colors={"MongoDB":"#38d9a9","Elasticsearch":"#4f8ef7","Neo4j":"#b197fc","Cassandra":"#f9a825","Redis":"#ff6b6b","CouchDB":"#ffa94d","DynamoDB":"#69db7c"};
+  document.getElementById('compare-content').innerHTML=`
+  <div class="card">
+    <div class="section-title">Vue d'ensemble — à mémoriser</div>
+    <div class="compare-table-wrap">
+      <table>
+        <thead><tr>${['Technologie','Modèle','Langage','CAP','Cas d\'usage','Entités'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${compareRows.map(r=>`<tr>
+          <td style="color:${colors[r.name]||'#fff'}">${r.name}</td>
+          <td>${r.model}</td><td><code>${r.lang}</code></td>
+          <td><span style="font-size:12px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.07)">${r.cap}</span></td>
+          <td>${r.use}</td><td style="color:var(--text3)">${r.entities}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">Mémo associations rapides</div>
+    <div class="memo-grid" style="margin-top:8px;">${memos.map(m=>`<div class="memo-card"><h4>${m.icon} ${m.title}</h4><p>${m.desc}</p></div>`).join('')}</div>
+  </div>`;
+}
+
+function setMode(mode,btn){
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else document.querySelectorAll('.mode-tab')[mode==='fiches'?0:mode==='qcm'?1:2].classList.add('active');
+  document.getElementById('fiches-section').classList.toggle('hidden',mode!=='fiches');
+  document.getElementById('qcm-section').classList.toggle('hidden',mode!=='qcm');
+  document.getElementById('compare-section').classList.toggle('hidden',mode!=='compare');
+  if(mode==='compare')renderCompare();
+  if(mode==='qcm'&&document.getElementById('qcm-content').innerHTML==='')setQCMPage(1);
+}
+
+renderFiche(techs[0]);
+</script>
+</body>
+</html>
